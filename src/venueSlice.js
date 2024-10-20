@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 export const venueSlice = createSlice({
   name: "venue",
-  initialState: [
+  initialState: [ //every time I use state[...] it means this array.
     {
       img: "https://pixabay.com/images/download/chairs-2181916_640.jpg",
       name: "Conference Room (Capacity:15)",
@@ -40,7 +40,8 @@ export const venueSlice = createSlice({
    
     incrementQuantity: (state, action) => {
       const { payload: index } = action;
-      if (state[index]) {
+      if (state[index])// checks if the item exists in the state at the provided index
+        {
         if (state[index].name === " Auditorium Hall (Capacity:200)" && state[index].quantity >= 3) {
           return;        }
         state[index].quantity++;

@@ -82,7 +82,7 @@ const ConferenceEvent = () => {
                 </div>
             </navbar>
             <div className="main_container">
-                {!showItems
+                {!showItems //{!showItems ? ( ... ) : ( ... )}
                     ?
                     (
                         <div className="items-information">

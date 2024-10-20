@@ -9,6 +9,7 @@ const ConferenceEvent = () => {
     const [numberOfPeople, setNumberOfPeople] = useState(1);
     const venueItems = useSelector((state) => state.venue);// useSelector() function retrieves venue items from the Redux store state
     const avItems = useSelector((state) => state.av);
+    const mealsItems = useSelector(state => state.meals);
     const dispatch = useDispatch();
     const remainingAuditoriumQuantity = 3 - venueItems.find(item => item.name === "Auditorium Hall (Capacity:200)").quantity;
 
@@ -197,9 +198,25 @@ const ConferenceEvent = () => {
                                 </div>
 
                                 <div className="input-container venue_selection">
-
+                                  <label htmlFor="numberOfPeople"><h3>Number Of People</h3></label> {/* The htmlFor attribute associates the label with an input element via the id attribute */}
+                                  <input type="number" className="input_box5" id="numberOfPeople" value={numberOfPeople} //value={numberOfPeople} binds the input’s value to numberOfPeople state variable
+                                  onChange={(e) => setNumberOfPeople(parseInt(e.target.value))} // The new value (from the input: (e.target.value) ) is passed to parseInt() to convert it from a string (as HTML inputs always return strings) to an integer.
+                                  min='1' // minimum allowed value for the input
+                                  />
                                 </div>
                                 <div className="meal_selection">
+                                  {mealsItems.map((item , index) => (
+                                    <div className="meal_item" key={index} style={{padding: 15}}> {/* The key prop is enable React to keep track of each item in the list */}
+                                      <div className="inner">
+                                        <label htmlFor={ `meal_${index}` }> {item.name} </label>
+                                        <input type="checkbox" id={ `meal_${index}` } 
+                                        checked = {item.selected}
+                                        onChange={() => handleMealSelection(index)}
+                                        />
+                                      </div>
+                                      <div className="meal_cost"> {item.cost}$ </div>
+                                    </div>
+                                  ))}
 
                                 </div>
                                 <div className="total_cost">Total Cost: </div>

@@ -6,11 +6,11 @@ import { incrementQuantity, decrementQuantity } from "./venueSlice";
 const ConferenceEvent = () => {
     const [showItems, setShowItems] = useState(false);
     const [numberOfPeople, setNumberOfPeople] = useState(1);
-    const venueItems = useSelector((state) => state.venue);
+    const venueItems = useSelector((state) => state.venue);// useSelector() function retrieves venue items from the Redux store state 
     const dispatch = useDispatch();
     const remainingAuditoriumQuantity = 3 - venueItems.find(item => item.name === "Auditorium Hall (Capacity:200)").quantity;
 
-    
+    // action objects
     const handleToggleItems = () => {
         console.log("handleToggleItems called");
         setShowItems(!showItems);

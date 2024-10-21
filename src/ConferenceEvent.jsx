@@ -4,6 +4,7 @@ import TotalCost from "./TotalCost";
 import { useSelector, useDispatch } from "react-redux";
 import { incrementQuantity, decrementQuantity } from "./venueSlice";
 import { decrementAvQuantity, incrementAvQuantity } from "./avSlice";
+import { toggleMealSelection } from "./mealsSlice";
 const ConferenceEvent = () => {
     const [showItems, setShowItems] = useState(false);
     const [numberOfPeople, setNumberOfPeople] = useState(1);
@@ -40,17 +41,87 @@ const ConferenceEvent = () => {
     };
 
     const handleMealSelection = (index) => {
-       
+      const item = mealsItems[index];
+      if(item.selected && item.type === "mealForPeople") {
+        // Ensure numberOfPeople is set before toggling selection
+        const newNumberOfPoeple = item.section ? numberOfPeople : 0;
+        dispatch(toggleMealSelection(index , newNumberOfPoeple));
+      }
+      else {
+        dispatch(toggleMealSelection(index));
+      }
     };
 
+    // need to write comments on this function
     const getItemsFromTotalCost = () => {
         const items = [];
+        venueItems.forEach(item => {
+          if (item.quantity > 0) {
+            items.push ({...item, type: 'venue'});
+          }
+        });
+        avItems.forEach (item => {
+          if (item.quantity > 0 && !items.some(i => i.name === item.name && i.type === 'av')) { // !item.some(...) ensures that if an item with the same name and type: 'av' already exists, it will not be added again.
+            items.push({...item, type: 'av'});
+          }
+        });
+        mealsItems.forEach (item => {
+          if (item.selected) {
+            const itemForDisplay = {...item, type: 'meals'}; //a copy of the current item, but with the type property set to 'meals'.
+            if (item.numberOfPeople) {
+              itemForDisplay.numberOfPeople = numberOfPeople;// adding a property called numberOfPeople with the value stored in numberOfPeople.
+            }
+            items.push(itemForDisplay);
+          }
+        });
+        return items;
     };
 
     const items = getItemsFromTotalCost();
 
-    const ItemsDisplay = ({ items }) => {
+    const ItemsDisplay = ({ items }) => {// extracting the items property from the object passed into the function = { items } means the items variable passed as props.
+      console.log(items);
+      return <> {/* wrap the JSX without adding extra HTML elements to the DOM.  */}
+      <div className="display_box1">
+        {items.length === 0 && <p> No items selected</p>} {/* a conditional rendering statement. If items.length === 0 , display the message. */}
+        <table className = "table_item_data">
 
+          {/** 
+           * @thead - group the header content of a table.
+           * @tr - table row
+           * @th - table header/column cell
+          */}
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Unit Cost</th>
+              <th>Quantity</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item , index) => (
+              <tr key={index}>
+              <td>{item.name}</td>
+              <td>{item.cost}</td>
+              <td>
+                {item.type === 'meals'|| item.numberOfPeople
+                ? `For ${numberOfPeople} people` // `` enables to dynamically insert variables or expressions inside a string
+                : item.quantity
+                }
+              </td>
+              <td>{item.type === 'meals' || item.numberOfPeople
+              //wrapping it in backticks with ${} convert the result of the expression into a string
+              ? `${item.cost * numberOfPeople}`
+              : `${item.cost * item.quantity}`
+              }
+              </td>
+            </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      </>
     };
     const calculateTotalCost = (section) => {
         let totalCost = 0;
@@ -65,10 +136,25 @@ const ConferenceEvent = () => {
 
           })
         }
+        else if (section === "meals") {
+          mealsItems.forEach(item => {
+            if (item.selected) {
+              totalCost += item.cost * numberOfPeople;
+            }
+          });
+        }
         return totalCost;
       };
     const venueTotalCost = calculateTotalCost("venue");
     const avTotalCost = calculateTotalCost("av");
+    const mealsTotalCost = calculateTotalCost("meals");
+
+    const totalCosts = {
+      venue: venueTotalCost,
+      av: avTotalCost,
+      meals: mealsTotalCost,
+    };
+
 
     const navigateToProducts = (idType) => {
         if (idType == '#venue' || idType == '#addons' || idType == '#meals') {
@@ -94,21 +180,16 @@ const ConferenceEvent = () => {
                 </div>
             </navbar>
             <div className="main_container">
-                {!showItems //{!showItems ? ( ... ) : ( ... )}
-                    ?
-                    (
-                        <div className="items-information">
-                             <div id="venue" className="venue_container container_main">
-        <div className="text">
- 
-          <h1>Venue Room Selection</h1>
-        </div>
+              {!showItems //{!showItems ? ( ... ) : ( ... )}
+              ?
+              (
+              <div className="items-information">
+                <div id="venue" className="venue_container container_main">
+                  <div className="text"><h1>Venue Room Selection</h1></div>
         <div className="venue_selection">
           {venueItems.map((item, index) => (
             <div className="venue_main" key={index}>
-              <div className="img">
-                <img src={item.img} alt={item.name} />
-              </div>
+              <div className="img"><img src={item.img} alt={item.name} /></div>
               <div className="text">{item.name}</div>
               <div>${item.cost}</div>
      <div className="button_container">
@@ -208,7 +289,11 @@ const ConferenceEvent = () => {
                                   {mealsItems.map((item , index) => (
                                     <div className="meal_item" key={index} style={{padding: 15}}> {/* The key prop is enable React to keep track of each item in the list */}
                                       <div className="inner">
-                                        <label htmlFor={ `meal_${index}` }> {item.name} </label>
+                                        <label htmlFor={ `meal_${index}` }> {item.name} </label> 
+                                        {/** 
+                                         * { `meal_${index}` } is a dynamic value because it uses a template literal (a feature of JavaScript) to incorporate the value of index into the id.
+                                         * backticks `` are used for string interpolation.
+                                        */}  
                                         <input type="checkbox" id={ `meal_${index}` } 
                                         checked = {item.selected}
                                         onChange={() => handleMealSelection(index)}
@@ -219,14 +304,12 @@ const ConferenceEvent = () => {
                                   ))}
 
                                 </div>
-                                <div className="total_cost">Total Cost: </div>
-
-
+                                <div className="total_cost">Total Cost: {mealsTotalCost}$</div>
                             </div>
                         </div>
                     ) : (
                         <div className="total_amount_detail">
-                            <TotalCost totalCosts={totalCosts} handleClick={handleToggleItems} ItemsDisplay={() => <ItemsDisplay items={items} />} />
+                            <TotalCost totalCosts={totalCosts} ItemsDisplay={() => <ItemsDisplay items={items} />} />
                         </div>
                     )
                 }
